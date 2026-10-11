@@ -30,3 +30,6 @@ Thumbs.db
 AGENTS.md
 CLAUDE.md
 /stubs
+/resources/js/actions/*
+/resources/js/routes/*
+/resources/js/wayfinder/*

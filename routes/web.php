@@ -1,10 +1,7 @@
 <?php
 
+use App\Http\Controllers\Document\DocumentController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'appName' => config('app.name'),
-    ]);
-});
+Route::get('/', [DocumentController::class, 'index'])->name('documents.index');
+Route::post('documents/store', [DocumentController::class, 'store'])->name('documents.store');
