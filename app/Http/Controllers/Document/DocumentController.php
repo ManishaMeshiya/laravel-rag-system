@@ -25,11 +25,11 @@ class DocumentController extends Controller
         try {
             $this->documentService->storeDocument($request->validated());
 
-            return redirect()->route('documents.index')->with('success', 'Document created successfully');
+            return redirect()->route('documents.index')->with('success', 'Document uploaded successfully');
         } catch (\Throwable $e) {
             report($e);
 
-            return redirect()->route('documents.index')->with('error', 'Failed to create document');
+            return redirect()->route('documents.index')->with('error', 'Failed to upload document');
         }
     }
 }

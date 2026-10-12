@@ -15,8 +15,14 @@ class DocumentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:255', 'min:5'],
-            'body' => ['required', 'string'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'file' => [
+                'required',
+                'file',
+                'max:10240',
+                'extensions:txt,md,pdf',
+                'mimetypes:text/plain,text/markdown,text/x-markdown,application/pdf',
+            ],
         ];
     }
 }

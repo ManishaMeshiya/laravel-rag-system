@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import FlashMessage from '@/Components/FlashMessage.vue';
 import { store } from '@/routes/documents';
@@ -10,15 +11,22 @@ defineProps({
     },
 });
 
+const fileInput = ref(null);
+
 const form = useForm({
     title: '',
-    body: '',
+    file: null,
 });
 
 const submitDocument = () => {
     form.submit(store(), {
+        forceFormData: true,
         onSuccess: () => {
             form.reset();
+
+            if (fileInput.value) {
+                fileInput.value.value = '';
+            }
         },
         preserveScroll: true,
     });
@@ -35,7 +43,7 @@ const submitDocument = () => {
             <section class="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm">
                 <header>
                     <h1 class="text-lg font-semibold">Documents</h1>
-                    <p class="mt-1 text-sm text-stone-500">Add a note the chat can cite later.</p>
+                    <p class="mt-1 text-sm text-stone-500">Upload a note the chat can cite later.</p>
                 </header>
 
                 <form class="flex flex-col gap-3" @submit.prevent="submitDocument">
@@ -44,24 +52,27 @@ const submitDocument = () => {
                         <input
                             v-model="form.title"
                             type="text"
+                            placeholder="Defaults to the filename"
                             class="rounded-lg border border-stone-300 px-3 py-2 font-normal"
                         >
                         <p v-if="form.errors.title" class="text-sm text-red-500">{{ form.errors.title }}</p>
                     </label>
                     <label class="flex flex-col gap-1 text-sm font-medium">
-                        Body
-                        <textarea
-                            v-model="form.body"
-                            rows="5"
+                        File
+                        <input
+                            ref="fileInput"
+                            type="file"
+                            accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf"
                             class="rounded-lg border border-stone-300 px-3 py-2 font-normal"
-                        />
-                        <p v-if="form.errors.body" class="text-sm text-red-500">{{ form.errors.body }}</p>
+                            @change="form.file = $event.target.files[0]"
+                        >
+                        <p v-if="form.errors.file" class="text-sm text-red-500">{{ form.errors.file }}</p>
                     </label>
                     <button
                         type="submit"
                         class="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white"
                     >
-                        Add document
+                        Upload document
                     </button>
                 </form>
 
@@ -74,7 +85,7 @@ const submitDocument = () => {
                         class="rounded-xl border border-stone-200 p-3"
                     >
                         <h2 class="font-medium">{{ document.title }}</h2>
-                        <p class="mt-1 line-clamp-3 text-sm text-stone-600">{{ document.body }}</p>
+                        <p class="mt-1 text-sm text-stone-600">{{ document.original_filename }}</p>
                     </li>
                 </ul>
             </section>
