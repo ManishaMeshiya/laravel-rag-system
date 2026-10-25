@@ -22,14 +22,8 @@ class DocumentController extends Controller
 
     public function store(DocumentRequest $request): RedirectResponse
     {
-        try {
-            $this->documentService->storeDocument($request->validated());
+        $this->documentService->storeDocument($request->toData());
 
-            return redirect()->route('documents.index')->with('success', 'Document uploaded successfully');
-        } catch (\Throwable $e) {
-            report($e);
-
-            return redirect()->route('documents.index')->with('error', 'Failed to upload document');
-        }
+        return redirect()->route('documents.index')->with('success', 'Document uploaded successfully');
     }
 }

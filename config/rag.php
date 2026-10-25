@@ -17,4 +17,16 @@ return [
 
     'chunk_overlap' => (int) env('RAG_CHUNK_OVERLAP', 100),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Embedding Dimensions
+    |--------------------------------------------------------------------------
+    |
+    | The length of each embedding vector. This must match the dimension of
+    | the document_chunks.embedding column.
+    |
+    */
+
+    'embedding_dimensions' => (int) env('RAG_EMBEDDING_DIMENSIONS', 1536),
+
 ];

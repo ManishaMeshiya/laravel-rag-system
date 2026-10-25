@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Data\StoreDocumentData;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
+use RuntimeException;
 
 class DocumentRequest extends FormRequest
 {
@@ -24,5 +27,19 @@ class DocumentRequest extends FormRequest
                 'mimetypes:text/plain,text/markdown,text/x-markdown,application/pdf',
             ],
         ];
+    }
+
+    public function toData(): StoreDocumentData
+    {
+        $file = $this->file('file');
+
+        if (! $file instanceof UploadedFile) {
+            throw new RuntimeException('The uploaded document is missing.');
+        }
+
+        return new StoreDocumentData(
+            title: $this->string('title')->toString(),
+            file: $file,
+        );
     }
 }

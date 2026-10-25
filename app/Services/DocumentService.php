@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Data\StoreDocumentData;
+use App\Jobs\IngestDocument;
 use App\Models\Document;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
 
@@ -23,13 +25,11 @@ class DocumentService
     }
 
     /**
-     * @param  array{title?: string|null, file: UploadedFile}  $data
-     *
      * @throws Throwable
      */
-    public function storeDocument(array $data): Document
+    public function storeDocument(StoreDocumentData $data): Document
     {
-        $file = $data['file'];
+        $file = $data->file;
         $originalFilename = $file->getClientOriginalName();
         $path = $file->store('documents');
 
@@ -37,11 +37,21 @@ class DocumentService
             throw new RuntimeException('Failed to store the uploaded document.');
         }
 
-        return Document::create([
-            'title' => filled($data['title'] ?? null) ? $data['title'] : $originalFilename,
-            'original_filename' => $originalFilename,
-            'path' => $path,
-            'mime_type' => $file->getMimeType() ?? $file->getClientMimeType(),
-        ]);
+        try {
+            $document = Document::create([
+                'title' => filled($data->title) ? $data->title : $originalFilename,
+                'original_filename' => $originalFilename,
+                'path' => $path,
+                'mime_type' => $file->getMimeType() ?? $file->getClientMimeType(),
+            ]);
+        } catch (Throwable $exception) {
+            Storage::delete($path);
+
+            throw $exception;
+        }
+
+        IngestDocument::dispatch($document);
+
+        return $document;
     }
 }
