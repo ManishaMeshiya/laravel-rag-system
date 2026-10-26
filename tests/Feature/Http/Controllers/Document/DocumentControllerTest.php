@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Http\Controllers\Document;
 
+use App\Jobs\IngestDocument;
 use App\Models\Document;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
@@ -35,6 +37,7 @@ class DocumentControllerTest extends TestCase
     public function test_store_uploads_a_text_file_and_persists_file_metadata(): void
     {
         Storage::fake();
+        Queue::fake([IngestDocument::class]);
 
         $file = UploadedFile::fake()->createWithContent('vacation-policy.txt', 'Employees receive 20 vacation days.');
 
@@ -55,11 +58,14 @@ class DocumentControllerTest extends TestCase
 
         $this->assertSame('Vacation policy', $document->title);
         Storage::assertExists($document->path);
+        Queue::assertPushed(IngestDocument::class, fn (IngestDocument $job): bool => $job->document->is($document));
+        $this->assertDatabaseCount('document_chunks', 0);
     }
 
     public function test_store_uses_the_original_filename_when_title_is_blank(): void
     {
         Storage::fake();
+        Queue::fake([IngestDocument::class]);
 
         $file = UploadedFile::fake()->createWithContent('onboarding.md', '# Welcome to the team');
 
@@ -72,11 +78,17 @@ class DocumentControllerTest extends TestCase
             'title' => 'onboarding.md',
             'original_filename' => 'onboarding.md',
         ]);
+
+        $document = Document::query()->first();
+
+        Queue::assertPushed(IngestDocument::class, fn (IngestDocument $job): bool => $job->document->is($document));
+        $this->assertDatabaseCount('document_chunks', 0);
     }
 
     public function test_store_ignores_a_client_supplied_storage_path(): void
     {
         Storage::fake();
+        Queue::fake([IngestDocument::class]);
 
         $file = UploadedFile::fake()->createWithContent('notes.txt', 'A private fact.');
 
@@ -94,6 +106,8 @@ class DocumentControllerTest extends TestCase
 
         $this->assertNotSame('../evil.txt', $document->path);
         Storage::assertExists($document->path);
+        Queue::assertPushed(IngestDocument::class, fn (IngestDocument $job): bool => $job->document->is($document));
+        $this->assertDatabaseCount('document_chunks', 0);
     }
 
     public function test_store_rejects_a_request_without_a_file(): void
