@@ -23,8 +23,8 @@ class DocumentRequest extends FormRequest
                 'required',
                 'file',
                 'max:10240',
-                'extensions:txt,md,pdf',
-                'mimetypes:text/plain,text/markdown,text/x-markdown,application/pdf',
+                'extensions:txt,md',
+                'mimetypes:text/plain,text/markdown,text/x-markdown',
             ],
         ];
     }

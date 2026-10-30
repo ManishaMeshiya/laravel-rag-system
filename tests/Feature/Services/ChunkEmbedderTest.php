@@ -58,4 +58,17 @@ class ChunkEmbedderTest extends TestCase
         $this->assertSame([[0.1], [0.9]], $embeddings);
         Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->inputs === ['alpha', 'beta']);
     }
+
+    public function test_query_returns_one_embedding_at_the_configured_dimensions(): void
+    {
+        config(['rag.embedding_dimensions' => 2]);
+
+        Embeddings::fake([[[0.3, 0.4]]]);
+
+        $embedding = (new ChunkEmbedder)->embedQuery('How many vacation days?');
+
+        $this->assertSame([0.3, 0.4], $embedding);
+        Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->inputs === ['How many vacation days?']
+            && $prompt->dimensions === 2);
+    }
 }

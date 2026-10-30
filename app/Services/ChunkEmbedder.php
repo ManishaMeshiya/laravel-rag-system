@@ -30,4 +30,16 @@ class ChunkEmbedder
 
         return $response->embeddings;
     }
+
+    /**
+     * @return list<float>
+     */
+    public function embedQuery(string $text): array
+    {
+        $response = Embeddings::for([$text])
+            ->dimensions((int) config('rag.embedding_dimensions'))
+            ->generate();
+
+        return $response->embeddings[0];
+    }
 }
