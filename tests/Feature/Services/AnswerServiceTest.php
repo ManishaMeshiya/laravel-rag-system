@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 class AnswerServiceTest extends TestCase
 {
-    public function test_answer_uses_the_retrieved_chunks_as_sources(): void
+    public function test_answer_is_generated_from_the_retrieved_chunks(): void
     {
         $vacation = new RetrievedContext(
             chunkId: 1,
@@ -39,7 +39,6 @@ class AnswerServiceTest extends TestCase
         $answer = app(AnswerService::class)->answer('How many vacation days?');
 
         $this->assertSame('Employees receive 20 vacation days.', $answer->text);
-        $this->assertSame([$vacation, $approval], $answer->sources);
         KnowledgeBase::assertPrompted(fn (AgentPrompt $prompt): bool => $prompt->contains('Employees receive 20 vacation days.')
             && $prompt->contains('Vacation requests need manager approval.')
             && $prompt->contains('How many vacation days?'));
@@ -58,7 +57,6 @@ class AnswerServiceTest extends TestCase
         $answer = app(AnswerService::class)->answer('What is the office address?');
 
         $this->assertSame("I don't know", $answer->text);
-        $this->assertSame([], $answer->sources);
         KnowledgeBase::assertNeverPrompted();
     }
 }

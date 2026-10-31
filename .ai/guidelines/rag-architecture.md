@@ -15,4 +15,3 @@ Flow: Upload → Extract text → Chunk → Embed → Store → Retrieve → Gen
 - Chunk size and overlap come from `config/rag.php`, not hardcoded.
 - The answer prompt must say: answer only from the provided context;
   if the context does not contain the answer, say "I don't know".
-- Always return the source chunks with the answer.

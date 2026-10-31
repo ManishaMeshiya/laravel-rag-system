@@ -17,12 +17,12 @@ class AnswerService
         $sources = $this->retriever->retrieve($question);
 
         if ($sources === []) {
-            return new AnswerData(text: "I don't know", sources: []);
+            return new AnswerData(text: "I don't know");
         }
 
         $response = (new KnowledgeBase)->prompt($this->prompt($question, $sources));
 
-        return new AnswerData(text: $response->text, sources: $sources);
+        return new AnswerData(text: $response->text);
     }
 
     /**

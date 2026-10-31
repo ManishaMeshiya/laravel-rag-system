@@ -1,8 +1,9 @@
 <script setup>
-import { ref } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { useForm, usePage } from '@inertiajs/vue3';
 import FlashMessage from '@/Components/FlashMessage.vue';
 import { store } from '@/routes/documents';
+import { store as storeQuestion } from '@/routes/questions';
 
 defineProps({
     documents: {
@@ -11,12 +12,19 @@ defineProps({
     },
 });
 
+const page = usePage();
 const fileInput = ref(null);
 
 const form = useForm({
     title: '',
     file: null,
 });
+
+const questionForm = useForm({
+    question: '',
+});
+
+const answer = computed(() => page.props.flash?.answer ?? null);
 
 const submitDocument = () => {
     form.submit(store(), {
@@ -29,6 +37,15 @@ const submitDocument = () => {
             }
         },
         preserveScroll: true,
+    });
+};
+
+const submitQuestion = () => {
+    questionForm.submit(storeQuestion(), {
+        preserveScroll: true,
+        onSuccess: () => {
+            questionForm.reset();
+        },
     });
 };
 </script>
@@ -96,22 +113,32 @@ const submitDocument = () => {
                 </header>
 
                 <div class="flex flex-1 flex-col gap-6 overflow-y-auto px-5 py-5">
-                    <p class="text-sm text-stone-500">No questions yet.</p>
+                    <p v-if="answer === null" class="text-sm text-stone-500">No questions yet.</p>
+
+                    <article v-else class="flex flex-col gap-4">
+                        <h2 class="font-medium">{{ answer.question }}</h2>
+                        <p class="text-sm leading-6">{{ answer.text }}</p>
+                    </article>
                 </div>
 
-                <form class="flex gap-2 border-t border-stone-200 p-4">
-                    <label class="sr-only" for="question">Question</label>
-                    <input
-                        id="question"
-                        type="text"
-                        class="min-w-0 flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm"
-                    >
-                    <button
-                        type="submit"
-                        class="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white"
-                    >
-                        Ask
-                    </button>
+                <form class="flex flex-col gap-2 border-t border-stone-200 p-4" @submit.prevent="submitQuestion">
+                    <div class="flex gap-2">
+                        <label class="sr-only" for="question">Question</label>
+                        <input
+                            id="question"
+                            v-model="questionForm.question"
+                            type="text"
+                            class="min-w-0 flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                        >
+                        <button
+                            type="submit"
+                            class="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                            :disabled="questionForm.processing"
+                        >
+                            Ask
+                        </button>
+                    </div>
+                    <p v-if="questionForm.errors.question" class="text-sm text-red-500">{{ questionForm.errors.question }}</p>
                 </form>
             </section>
         </div>
