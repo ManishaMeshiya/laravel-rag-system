@@ -87,8 +87,11 @@ Open [http://localhost](http://localhost). Sail serves the app on port 80 unless
 
 1. On the home page, choose a `.txt`, `.md`, or `.pdf` file. The title is optional and defaults to the file name.
 2. Upload it. The document moves from `pending` to `ready` automatically when the queue worker stores its chunks, or to `failed` if ingestion cannot complete.
-3. Type a question and submit it. The answer is added to the chat history with expandable source excerpts.
+3. Type a question and submit it. The answer is saved in the chat history with expandable source excerpts.
 4. Ask something the documents do not cover. The answer is "I don't know".
+5. Delete a document to remove its stored file and indexed chunks.
+
+Uploads and questions are rate limited by IP address to protect the AI provider quota in a public demo.
 
 Stop the containers with `vendor/bin/sail stop`.
 
