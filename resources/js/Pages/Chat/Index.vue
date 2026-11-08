@@ -1,18 +1,21 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { useForm, usePage } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
+import { useForm, usePoll } from '@inertiajs/vue3';
 import FlashMessage from '@/Components/FlashMessage.vue';
 import { store } from '@/routes/documents';
 import { store as storeQuestion } from '@/routes/questions';
 
-defineProps({
+const props = defineProps({
     documents: {
+        type: Array,
+        required: true,
+    },
+    messages: {
         type: Array,
         required: true,
     },
 });
 
-const page = usePage();
 const fileInput = ref(null);
 
 const form = useForm({
@@ -24,7 +27,28 @@ const questionForm = useForm({
     question: '',
 });
 
-const answer = computed(() => page.props.flash?.answer ?? null);
+const hasPendingDocuments = computed(() => props.documents.some((document) => document.status === 'pending'));
+const { start, stop } = usePoll(2000, {
+    only: ['documents'],
+}, {
+    autoStart: false,
+});
+
+watch(hasPendingDocuments, (hasPending) => {
+    if (hasPending) {
+        start();
+
+        return;
+    }
+
+    stop();
+}, { immediate: true });
+
+const statusClasses = (status) => ({
+    pending: 'bg-amber-100 text-amber-800',
+    ready: 'bg-emerald-100 text-emerald-800',
+    failed: 'bg-red-100 text-red-800',
+}[status] ?? 'bg-stone-100 text-stone-700');
 
 const submitDocument = () => {
     form.submit(store(), {
@@ -87,9 +111,10 @@ const submitQuestion = () => {
                     </label>
                     <button
                         type="submit"
-                        class="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white"
+                        class="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                        :disabled="form.processing"
                     >
-                        Upload document
+                        {{ form.processing ? 'Uploading...' : 'Upload document' }}
                     </button>
                 </form>
 
@@ -101,8 +126,22 @@ const submitQuestion = () => {
                         :key="document.id"
                         class="rounded-xl border border-stone-200 p-3"
                     >
-                        <h2 class="font-medium">{{ document.title }}</h2>
+                        <div class="flex items-start justify-between gap-3">
+                            <h2 class="font-medium">{{ document.title }}</h2>
+                            <span
+                                class="rounded-full px-2 py-1 text-xs font-medium capitalize"
+                                :class="statusClasses(document.status)"
+                            >
+                                {{ document.status }}
+                            </span>
+                        </div>
                         <p class="mt-1 text-sm text-stone-600">{{ document.original_filename }}</p>
+                        <p v-if="document.status === 'pending'" class="mt-2 text-xs text-amber-700">
+                            Preparing this document for search…
+                        </p>
+                        <p v-if="document.status === 'failed'" class="mt-2 text-xs text-red-700">
+                            Ingestion failed. Check the queue worker and application logs.
+                        </p>
                     </li>
                 </ul>
             </section>
@@ -113,11 +152,34 @@ const submitQuestion = () => {
                 </header>
 
                 <div class="flex flex-1 flex-col gap-6 overflow-y-auto px-5 py-5">
-                    <p v-if="answer === null" class="text-sm text-stone-500">No questions yet.</p>
+                    <p v-if="messages.length === 0" class="text-sm text-stone-500">
+                        Ask a question after a document is ready.
+                    </p>
 
-                    <article v-else class="flex flex-col gap-4">
-                        <h2 class="font-medium">{{ answer.question }}</h2>
-                        <p class="text-sm leading-6">{{ answer.text }}</p>
+                    <article
+                        v-for="message in messages"
+                        :key="message.id"
+                        class="flex flex-col gap-3 border-b border-stone-100 pb-6 last:border-b-0 last:pb-0"
+                    >
+                        <div class="self-end rounded-2xl rounded-br-sm bg-stone-900 px-4 py-3 text-sm text-white">
+                            {{ message.question }}
+                        </div>
+                        <div class="flex flex-col gap-3">
+                            <p class="text-sm leading-6">{{ message.answer }}</p>
+                            <div v-if="message.sources.length > 0" class="flex flex-col gap-2">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-stone-500">Sources</h3>
+                                <details
+                                    v-for="(source, index) in message.sources"
+                                    :key="`${message.id}-${source.document_id}-${index}`"
+                                    class="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2"
+                                >
+                                    <summary class="cursor-pointer text-sm font-medium">
+                                        {{ source.document_title }}
+                                    </summary>
+                                    <p class="mt-2 text-xs leading-5 text-stone-600">{{ source.excerpt }}</p>
+                                </details>
+                            </div>
+                        </div>
                     </article>
                 </div>
 
@@ -135,7 +197,7 @@ const submitQuestion = () => {
                             class="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                             :disabled="questionForm.processing"
                         >
-                            Ask
+                            {{ questionForm.processing ? 'Thinking...' : 'Ask' }}
                         </button>
                     </div>
                     <p v-if="questionForm.errors.question" class="text-sm text-red-500">{{ questionForm.errors.question }}</p>
