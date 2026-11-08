@@ -46,7 +46,7 @@ class ChunkRetrieverTest extends TestCase
         $this->assertSame('Employees receive 20 vacation days.', $contexts[0]->content);
         $this->assertSame($match->id, $contexts[0]->documentId);
         $this->assertSame('Vacation policy', $contexts[0]->documentTitle);
-        Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->inputs === ['How many vacation days?']
+        Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->inputs === ['how many vacation days?']
             && $prompt->dimensions === 1536);
     }
 

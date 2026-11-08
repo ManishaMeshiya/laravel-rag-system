@@ -35,7 +35,7 @@ class ChunkEmbedderTest extends TestCase
         ]);
 
         $this->assertSame([$vector], $embeddings);
-        Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->contains('Employees receive 20 vacation days.')
+        Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->contains('employees receive 20 vacation days.')
             && $prompt->dimensions === 2);
     }
 
@@ -68,7 +68,19 @@ class ChunkEmbedderTest extends TestCase
         $embedding = (new ChunkEmbedder)->embedQuery('How many vacation days?');
 
         $this->assertSame([0.3, 0.4], $embedding);
-        Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->inputs === ['How many vacation days?']
+        Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->inputs === ['how many vacation days?']
             && $prompt->dimensions === 2);
+    }
+
+    public function test_mixed_case_text_is_embedded_in_lowercase(): void
+    {
+        config(['rag.embedding_dimensions' => 2]);
+
+        Embeddings::fake([[[0.1, 0.2]]]);
+
+        $embedding = (new ChunkEmbedder)->embedQuery('Manisha BHimani');
+
+        $this->assertSame([0.1, 0.2], $embedding);
+        Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->inputs === ['manisha bhimani']);
     }
 }
