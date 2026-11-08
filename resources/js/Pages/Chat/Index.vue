@@ -1,8 +1,8 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { useForm, usePoll } from '@inertiajs/vue3';
+import { router, useForm, usePoll } from '@inertiajs/vue3';
 import FlashMessage from '@/Components/FlashMessage.vue';
-import { store } from '@/routes/documents';
+import { destroy, store } from '@/routes/documents';
 import { store as storeQuestion } from '@/routes/questions';
 
 const props = defineProps({
@@ -17,6 +17,9 @@ const props = defineProps({
 });
 
 const fileInput = ref(null);
+const deletingDocumentId = ref(null);
+const documentError = ref('');
+const questionSubmitError = ref('');
 
 const form = useForm({
     title: '',
@@ -64,11 +67,37 @@ const submitDocument = () => {
     });
 };
 
+const deleteDocument = (document) => {
+    if (! window.confirm(`Delete "${document.title}" and all of its indexed chunks?`)) {
+        return;
+    }
+
+    deletingDocumentId.value = document.id;
+    documentError.value = '';
+
+    router.delete(destroy.url(document.id), {
+        preserveScroll: true,
+        onError: () => {
+            documentError.value = 'The document could not be deleted. Please try again.';
+        },
+        onFinish: () => {
+            deletingDocumentId.value = null;
+        },
+    });
+};
+
 const submitQuestion = () => {
+    questionSubmitError.value = '';
+
     questionForm.submit(storeQuestion(), {
         preserveScroll: true,
         onSuccess: () => {
             questionForm.reset();
+        },
+        onError: (errors) => {
+            if (! errors.question) {
+                questionSubmitError.value = 'The answer could not be generated. Please try again.';
+            }
         },
     });
 };
@@ -118,6 +147,8 @@ const submitQuestion = () => {
                     </button>
                 </form>
 
+                <p v-if="documentError" class="text-sm text-red-600" role="alert">{{ documentError }}</p>
+
                 <p v-if="documents.length === 0" class="text-sm text-stone-500">No documents yet.</p>
 
                 <ul v-else class="flex flex-col gap-3">
@@ -142,6 +173,14 @@ const submitQuestion = () => {
                         <p v-if="document.status === 'failed'" class="mt-2 text-xs text-red-700">
                             Ingestion failed. Check the queue worker and application logs.
                         </p>
+                        <button
+                            type="button"
+                            class="mt-3 text-xs font-medium text-red-700 disabled:opacity-50"
+                            :disabled="deletingDocumentId === document.id"
+                            @click="deleteDocument(document)"
+                        >
+                            {{ deletingDocumentId === document.id ? 'Deleting...' : 'Delete' }}
+                        </button>
                     </li>
                 </ul>
             </section>
@@ -191,6 +230,7 @@ const submitQuestion = () => {
                             v-model="questionForm.question"
                             type="text"
                             class="min-w-0 flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                            :disabled="questionForm.processing"
                         >
                         <button
                             type="submit"
@@ -200,7 +240,12 @@ const submitQuestion = () => {
                             {{ questionForm.processing ? 'Thinking...' : 'Ask' }}
                         </button>
                     </div>
-                    <p v-if="questionForm.errors.question" class="text-sm text-red-500">{{ questionForm.errors.question }}</p>
+                    <p v-if="questionForm.errors.question" class="text-sm text-red-500">
+                        {{ questionForm.errors.question }}
+                    </p>
+                    <p v-if="questionSubmitError" class="text-sm text-red-500" role="alert">
+                        {{ questionSubmitError }}
+                    </p>
                 </form>
             </section>
         </div>
