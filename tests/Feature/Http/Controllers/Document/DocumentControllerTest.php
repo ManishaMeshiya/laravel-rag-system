@@ -62,6 +62,33 @@ class DocumentControllerTest extends TestCase
         $this->assertDatabaseCount('document_chunks', 0);
     }
 
+    public function test_store_uploads_a_pdf_and_persists_file_metadata(): void
+    {
+        Storage::fake();
+        Queue::fake([IngestDocument::class]);
+
+        $file = UploadedFile::fake()->createWithContent(
+            'handbook.pdf',
+            file_get_contents(base_path('tests/Fixtures/handbook.pdf')),
+        );
+
+        $this->post(route('documents.store'), [
+            'title' => 'Employee handbook',
+            'file' => $file,
+        ])->assertRedirectToRoute('documents.index');
+
+        $this->assertDatabaseHas('documents', [
+            'title' => 'Employee handbook',
+            'original_filename' => 'handbook.pdf',
+            'mime_type' => 'application/pdf',
+        ]);
+
+        $document = Document::query()->first();
+
+        Storage::assertExists($document->path);
+        Queue::assertPushed(IngestDocument::class, fn (IngestDocument $job): bool => $job->document->is($document));
+    }
+
     public function test_store_uses_the_original_filename_when_title_is_blank(): void
     {
         Storage::fake();

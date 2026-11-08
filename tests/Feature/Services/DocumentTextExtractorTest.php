@@ -9,6 +9,7 @@ use App\Services\DocumentTextExtractor;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
+use Smalot\PdfParser\Parser;
 use Tests\TestCase;
 
 class DocumentTextExtractorTest extends TestCase
@@ -24,7 +25,7 @@ class DocumentTextExtractorTest extends TestCase
 
         Storage::put($document->path, 'Employees receive 20 vacation days.');
 
-        $contents = (new DocumentTextExtractor)->extract($document);
+        $contents = $this->extractor()->extract($document);
 
         $this->assertSame('Employees receive 20 vacation days.', $contents);
     }
@@ -41,7 +42,7 @@ class DocumentTextExtractorTest extends TestCase
 
         Storage::put($document->path, '# Welcome');
 
-        $contents = (new DocumentTextExtractor)->extract($document);
+        $contents = $this->extractor()->extract($document);
 
         $this->assertSame('# Welcome', $contents);
     }
@@ -58,10 +59,10 @@ class DocumentTextExtractorTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('The document file is missing.');
 
-        (new DocumentTextExtractor)->extract($document);
+        $this->extractor()->extract($document);
     }
 
-    public function test_pdf_document_throws(): void
+    public function test_pdf_returns_its_text(): void
     {
         Storage::fake();
 
@@ -70,12 +71,42 @@ class DocumentTextExtractorTest extends TestCase
             'mime_type' => 'application/pdf',
         ]);
 
+        Storage::put($document->path, $this->handbookPdf());
+
+        $contents = $this->extractor()->extract($document);
+
+        $this->assertSame('Employees receive 20 vacation days.', $contents);
+    }
+
+    public function test_unreadable_pdf_throws(): void
+    {
+        Storage::fake();
+
+        $document = Document::factory()->make([
+            'path' => 'documents/broken.pdf',
+            'mime_type' => 'application/pdf',
+        ]);
+
         Storage::put($document->path, '%PDF-1.4');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Text extraction is not supported for this document.');
+        $this->expectExceptionMessage('The PDF could not be read.');
 
-        (new DocumentTextExtractor)->extract($document);
+        $this->extractor()->extract($document);
+    }
+
+    private function extractor(): DocumentTextExtractor
+    {
+        return new DocumentTextExtractor(new Parser);
+    }
+
+    private function handbookPdf(): string
+    {
+        $contents = file_get_contents(base_path('tests/Fixtures/handbook.pdf'));
+
+        $this->assertIsString($contents);
+
+        return $contents;
     }
 
     /**

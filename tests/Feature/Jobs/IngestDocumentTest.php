@@ -98,10 +98,35 @@ class IngestDocumentTest extends TestCase
         Embeddings::assertNothingGenerated();
     }
 
+    public function test_pdf_file_is_stored_as_chunks_with_embeddings(): void
+    {
+        config(['rag.embedding_dimensions' => 1536]);
+
+        $document = Document::factory()->create([
+            'mime_type' => 'application/pdf',
+            'path' => 'documents/handbook.pdf',
+        ]);
+
+        Storage::fake();
+        Storage::put($document->path, file_get_contents(base_path('tests/Fixtures/handbook.pdf')));
+
+        Embeddings::fake([
+            [$this->vector(0.5)],
+        ]);
+
+        $this->ingest($document);
+
+        $chunks = $document->chunks()->orderBy('id')->get();
+
+        $this->assertCount(1, $chunks);
+        $this->assertSame('Employees receive 20 vacation days.', $chunks[0]->content);
+        $this->assertSame($this->vector(0.5), $chunks[0]->embedding);
+    }
+
     public function test_unsupported_mime_type_fails_and_stores_no_chunks(): void
     {
         $document = Document::factory()->create([
-            'mime_type' => 'application/pdf',
+            'mime_type' => 'image/jpeg',
         ]);
 
         Storage::fake();
