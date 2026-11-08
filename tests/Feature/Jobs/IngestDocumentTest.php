@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Jobs;
 
+use App\Enums\DocumentStatus;
 use App\Jobs\IngestDocument;
 use App\Models\Document;
 use App\Models\DocumentChunk;
@@ -45,6 +46,7 @@ class IngestDocumentTest extends TestCase
         $this->assertSame(['aaaaa', 'bbbbb'], $chunks->pluck('content')->all());
         $this->assertSame($this->vector(0.5), $chunks[0]->embedding);
         $this->assertSame($this->vector(0.25), $chunks[1]->embedding);
+        $this->assertSame(DocumentStatus::Ready, $document->refresh()->status);
         Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->dimensions === 1536
             && $prompt->inputs === ['aaaaa', 'bbbbb']);
     }
@@ -162,6 +164,16 @@ class IngestDocumentTest extends TestCase
 
         $this->assertDatabaseCount('document_chunks', 0);
         Embeddings::assertNothingGenerated();
+    }
+
+    public function test_terminal_failure_marks_the_document_as_failed(): void
+    {
+        $document = Document::factory()->create();
+        $job = new IngestDocument($document);
+
+        $job->failed(new RuntimeException('Provider unavailable.'));
+
+        $this->assertSame(DocumentStatus::Failed, $document->refresh()->status);
     }
 
     private function ingest(Document $document): void

@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Http\Controllers\Document;
 
+use App\Enums\DocumentStatus;
 use App\Jobs\IngestDocument;
+use App\Models\ChatMessage;
 use App\Models\Document;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -21,6 +23,16 @@ class DocumentControllerTest extends TestCase
             'title' => 'Employee handbook',
             'original_filename' => 'handbook.txt',
             'path' => 'documents/secret-handbook.txt',
+            'status' => DocumentStatus::Ready,
+        ]);
+        ChatMessage::factory()->create([
+            'question' => 'How many vacation days?',
+            'answer' => 'Employees receive 20 vacation days.',
+            'sources' => [[
+                'document_id' => 1,
+                'document_title' => 'Employee handbook',
+                'excerpt' => 'Employees receive 20 vacation days.',
+            ]],
         ]);
 
         $this->get(route('documents.index'))
@@ -30,8 +42,13 @@ class DocumentControllerTest extends TestCase
                 ->has('documents', 1)
                 ->where('documents.0.title', 'Employee handbook')
                 ->where('documents.0.original_filename', 'handbook.txt')
+                ->where('documents.0.status', DocumentStatus::Ready->value)
                 ->missing('documents.0.path')
-                ->missing('documents.0.body'));
+                ->missing('documents.0.body')
+                ->has('messages', 1)
+                ->where('messages.0.question', 'How many vacation days?')
+                ->where('messages.0.answer', 'Employees receive 20 vacation days.')
+                ->where('messages.0.sources.0.document_title', 'Employee handbook'));
     }
 
     public function test_store_uploads_a_text_file_and_persists_file_metadata(): void
@@ -52,6 +69,7 @@ class DocumentControllerTest extends TestCase
             'title' => 'Vacation policy',
             'original_filename' => 'vacation-policy.txt',
             'mime_type' => 'text/plain',
+            'status' => DocumentStatus::Pending->value,
         ]);
 
         $document = Document::query()->first();

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Http\Controllers\Question;
 
 use App\Data\AnswerData;
+use App\Data\AnswerSourceData;
 use App\Services\AnswerService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
-use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 class QuestionControllerTest extends TestCase
@@ -22,6 +22,13 @@ class QuestionControllerTest extends TestCase
             ->with('How many vacation days?')
             ->andReturn(new AnswerData(
                 text: 'Employees receive 20 vacation days.',
+                sources: [
+                    new AnswerSourceData(
+                        documentId: 1,
+                        documentTitle: 'Vacation policy',
+                        excerpt: 'Employees receive 20 vacation days.',
+                    ),
+                ],
             ));
 
         $this->from(route('documents.index'))
@@ -29,18 +36,7 @@ class QuestionControllerTest extends TestCase
                 'question' => 'How many vacation days?',
             ])
             ->assertRedirectToRoute('documents.index')
-            ->assertSessionHas('answer', [
-                'question' => 'How many vacation days?',
-                'text' => 'Employees receive 20 vacation days.',
-            ]);
-
-        $this->get(route('documents.index'))
-            ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page
-                ->component('Chat/Index')
-                ->where('flash.answer.question', 'How many vacation days?')
-                ->where('flash.answer.text', 'Employees receive 20 vacation days.')
-                ->missing('flash.answer.sources'));
+            ->assertSessionMissing('answer');
     }
 
     public function test_store_rejects_a_missing_question(): void
