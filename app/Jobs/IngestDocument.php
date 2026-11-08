@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\DocumentStatus;
 use App\Models\Document;
 use App\Services\ChunkEmbedder;
 use App\Services\DocumentChunkStore;
@@ -11,6 +12,7 @@ use App\Services\DocumentTextExtractor;
 use App\Services\TextChunker;
 use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Foundation\Queue\Queueable;
+use Throwable;
 
 class IngestDocument implements ShouldQueueAfterCommit
 {
@@ -28,5 +30,11 @@ class IngestDocument implements ShouldQueueAfterCommit
         $embeddings = $embedder->embed($chunks);
 
         $chunkStore->replace($this->document, $chunks, $embeddings);
+        $this->document->update(['status' => DocumentStatus::Ready]);
+    }
+
+    public function failed(?Throwable $exception): void
+    {
+        $this->document->update(['status' => DocumentStatus::Failed]);
     }
 }

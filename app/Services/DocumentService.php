@@ -18,7 +18,7 @@ class DocumentService
     public function getDocuments(): Collection
     {
         return Document::query()
-            ->select('id', 'title', 'original_filename')
+            ->select('id', 'title', 'original_filename', 'status')
             ->latest()
             ->orderByDesc('id')
             ->get();

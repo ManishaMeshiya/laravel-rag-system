@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\DocumentStatus;
 use App\Models\Document;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -24,6 +25,7 @@ class DocumentFactory extends Factory
             'original_filename' => $filename,
             'path' => 'documents/'.$filename,
             'mime_type' => 'text/plain',
+            'status' => DocumentStatus::Pending,
         ];
     }
 }
