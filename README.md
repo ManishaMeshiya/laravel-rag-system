@@ -4,14 +4,29 @@ A simple RAG system. Upload a document, ask a question, and get an answer drawn 
 
 If the retrieved text does not contain the answer, the app says "I don't know".
 
+![Laravel RAG Demo interface preview](docs/rag-demo-preview.svg)
+
 ## How it works
 
 1. You upload a `.txt`, `.md`, or `.pdf` file (10 MB maximum). PDF support is text only; scanned pages are not read.
 2. A queued job extracts the text, splits it into chunks, and stores an embedding for each chunk.
 3. A question is embedded the same way. The closest chunks are loaded from PostgreSQL with pgvector.
-4. Those chunks are sent to the model as context, and the answer is shown on the page.
+4. Those chunks are sent to the model as context. The answer and its source excerpts are stored in the chat history.
 
 Chunk size, overlap, embedding dimensions, and how many chunks are retrieved live in `config/rag.php`.
+
+```mermaid
+flowchart LR
+    Upload[Upload document] --> Extract[Extract text]
+    Extract --> Chunk[Split into overlapping chunks]
+    Chunk --> Embed[Create embeddings]
+    Embed --> Store[(PostgreSQL + pgvector)]
+    Question[Ask a question] --> QueryEmbed[Embed question]
+    QueryEmbed --> Retrieve[Retrieve similar chunks]
+    Store --> Retrieve
+    Retrieve --> Generate[Generate grounded answer]
+    Generate --> History[(Answer history + citations)]
+```
 
 ## Packages
 
@@ -71,8 +86,8 @@ Open [http://localhost](http://localhost). Sail serves the app on port 80 unless
 ## Use the app
 
 1. On the home page, choose a `.txt`, `.md`, or `.pdf` file. The title is optional and defaults to the file name.
-2. Upload it, then wait until the queue worker finishes. The document is listed immediately; it can be searched only after the job stores its chunks.
-3. Type a question and submit it. The answer appears above the form.
+2. Upload it. The document moves from `pending` to `ready` automatically when the queue worker stores its chunks, or to `failed` if ingestion cannot complete.
+3. Type a question and submit it. The answer is added to the chat history with expandable source excerpts.
 4. Ask something the documents do not cover. The answer is "I don't know".
 
 Stop the containers with `vendor/bin/sail stop`.

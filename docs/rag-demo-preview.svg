@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title description">
+  <title id="title">Laravel RAG Demo interface preview</title>
+  <desc id="description">A document panel with ingestion statuses beside a question and answer panel with source citations.</desc>
+  <rect width="1200" height="700" fill="#f5f5f4"/>
+  <rect x="55" y="55" width="1090" height="590" rx="24" fill="#ffffff" stroke="#e7e5e4"/>
+
+  <text x="95" y="112" fill="#1c1917" font-family="Arial, sans-serif" font-size="24" font-weight="700">Documents</text>
+  <text x="95" y="142" fill="#78716c" font-family="Arial, sans-serif" font-size="15">Upload knowledge for grounded answers.</text>
+  <rect x="95" y="174" width="330" height="44" rx="9" fill="#fafaf9" stroke="#d6d3d1"/>
+  <text x="112" y="201" fill="#a8a29e" font-family="Arial, sans-serif" font-size="14">Employee handbook</text>
+  <rect x="95" y="232" width="330" height="44" rx="9" fill="#fafaf9" stroke="#d6d3d1"/>
+  <text x="112" y="259" fill="#57534e" font-family="Arial, sans-serif" font-size="14">handbook.pdf</text>
+  <rect x="95" y="290" width="330" height="42" rx="9" fill="#1c1917"/>
+  <text x="202" y="316" fill="#ffffff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Upload document</text>
+
+  <rect x="95" y="370" width="330" height="88" rx="12" fill="#ffffff" stroke="#e7e5e4"/>
+  <text x="112" y="400" fill="#292524" font-family="Arial, sans-serif" font-size="15" font-weight="700">Employee handbook</text>
+  <text x="112" y="427" fill="#78716c" font-family="Arial, sans-serif" font-size="13">handbook.pdf</text>
+  <rect x="340" y="386" width="66" height="25" rx="12" fill="#d1fae5"/>
+  <text x="355" y="403" fill="#065f46" font-family="Arial, sans-serif" font-size="12" font-weight="700">READY</text>
+
+  <line x1="470" y1="55" x2="470" y2="645" stroke="#e7e5e4"/>
+  <text x="510" y="112" fill="#1c1917" font-family="Arial, sans-serif" font-size="24" font-weight="700">Ask the knowledge base</text>
+  <rect x="720" y="155" width="365" height="55" rx="18" fill="#1c1917"/>
+  <text x="744" y="188" fill="#ffffff" font-family="Arial, sans-serif" font-size="15">How many vacation days do employees receive?</text>
+
+  <text x="510" y="264" fill="#292524" font-family="Arial, sans-serif" font-size="16">Employees receive 20 vacation days.</text>
+  <text x="510" y="312" fill="#78716c" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1">SOURCES</text>
+  <rect x="510" y="332" width="575" height="92" rx="12" fill="#fafaf9" stroke="#e7e5e4"/>
+  <text x="532" y="362" fill="#292524" font-family="Arial, sans-serif" font-size="14" font-weight="700">Employee handbook</text>
+  <text x="532" y="393" fill="#78716c" font-family="Arial, sans-serif" font-size="13">Employees receive 20 vacation days. Vacation requests need</text>
+  <text x="532" y="413" fill="#78716c" font-family="Arial, sans-serif" font-size="13">manager approval.</text>
+
+  <line x1="470" y1="525" x2="1145" y2="525" stroke="#e7e5e4"/>
+  <rect x="510" y="558" width="470" height="44" rx="9" fill="#ffffff" stroke="#d6d3d1"/>
+  <text x="528" y="585" fill="#a8a29e" font-family="Arial, sans-serif" font-size="14">Ask a question about your documents&</text>
+  <rect x="995" y="558" width="90" height="44" rx="9" fill="#1c1917"/>
+  <text x="1027" y="585" fill="#ffffff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Ask</text>
+</svg>
