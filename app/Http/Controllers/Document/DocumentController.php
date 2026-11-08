@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Document;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DocumentRequest;
+use App\Services\AnswerService;
 use App\Services\DocumentService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -11,12 +12,16 @@ use Inertia\Response;
 
 class DocumentController extends Controller
 {
-    public function __construct(private DocumentService $documentService) {}
+    public function __construct(
+        private DocumentService $documentService,
+        private AnswerService $answerService,
+    ) {}
 
     public function index(): Response
     {
         return Inertia::render('Chat/Index', [
-            'documents' => $this->documentService->getDocuments(),
+            'documents' => fn () => $this->documentService->getDocuments(),
+            'messages' => fn () => $this->answerService->getHistory(),
         ]);
     }
 

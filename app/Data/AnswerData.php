@@ -6,7 +6,11 @@ namespace App\Data;
 
 readonly class AnswerData
 {
+    /**
+     * @param  list<AnswerSourceData>  $sources
+     */
     public function __construct(
         public string $text,
+        public array $sources = [],
     ) {}
 }

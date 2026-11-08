@@ -15,11 +15,8 @@ class QuestionController extends Controller
 
     public function store(QuestionRequest $request): RedirectResponse
     {
-        $answer = $this->answerService->answer($request->question());
+        $this->answerService->answer($request->question());
 
-        return redirect()->route('documents.index')->with('answer', [
-            'question' => $request->question(),
-            'text' => $answer->text,
-        ]);
+        return redirect()->route('documents.index');
     }
 }
