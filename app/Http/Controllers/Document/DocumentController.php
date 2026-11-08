@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Document;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DocumentRequest;
+use App\Models\Document;
 use App\Services\AnswerService;
 use App\Services\DocumentService;
 use Illuminate\Http\RedirectResponse;
@@ -30,5 +31,12 @@ class DocumentController extends Controller
         $this->documentService->storeDocument($request->toData());
 
         return redirect()->route('documents.index')->with('success', 'Document uploaded successfully');
+    }
+
+    public function destroy(Document $document): RedirectResponse
+    {
+        $this->documentService->deleteDocument($document);
+
+        return redirect()->route('documents.index')->with('success', 'Document deleted successfully');
     }
 }

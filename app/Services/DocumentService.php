@@ -54,4 +54,15 @@ class DocumentService
 
         return $document;
     }
+
+    public function deleteDocument(Document $document): void
+    {
+        $path = $document->path;
+
+        $document->delete();
+
+        if (! Storage::delete($path)) {
+            throw new RuntimeException('The document was deleted, but its stored file could not be removed.');
+        }
+    }
 }
