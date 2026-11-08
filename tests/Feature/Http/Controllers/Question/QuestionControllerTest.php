@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\Http\Controllers\Question;
 
 use App\Data\AnswerData;
-use App\Data\AnswerSourceData;
 use App\Services\AnswerService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
@@ -20,16 +19,7 @@ class QuestionControllerTest extends TestCase
             ->shouldReceive('answer')
             ->once()
             ->with('How many vacation days?')
-            ->andReturn(new AnswerData(
-                text: 'Employees receive 20 vacation days.',
-                sources: [
-                    new AnswerSourceData(
-                        documentId: 1,
-                        documentTitle: 'Vacation policy',
-                        excerpt: 'Employees receive 20 vacation days.',
-                    ),
-                ],
-            ));
+            ->andReturn(new AnswerData(text: 'Employees receive 20 vacation days.'));
 
         $this->from(route('documents.index'))
             ->post(route('questions.store'), [
@@ -59,5 +49,23 @@ class QuestionControllerTest extends TestCase
             ->assertInvalid([
                 'question' => 'The question field must not be greater than 2000 characters.',
             ]);
+    }
+
+    public function test_store_is_rate_limited(): void
+    {
+        $this->mock(AnswerService::class)
+            ->shouldReceive('answer')
+            ->times(10)
+            ->andReturn(new AnswerData(text: 'Employees receive 20 vacation days.'));
+
+        for ($attempt = 1; $attempt <= 10; $attempt++) {
+            $this->post(route('questions.store'), [
+                'question' => 'How many vacation days?',
+            ])->assertRedirectToRoute('documents.index');
+        }
+
+        $this->post(route('questions.store'), [
+            'question' => 'How many vacation days?',
+        ])->assertTooManyRequests();
     }
 }

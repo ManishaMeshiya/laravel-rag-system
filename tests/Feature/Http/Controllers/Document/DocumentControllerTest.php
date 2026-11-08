@@ -6,6 +6,7 @@ use App\Enums\DocumentStatus;
 use App\Jobs\IngestDocument;
 use App\Models\ChatMessage;
 use App\Models\Document;
+use App\Models\DocumentChunk;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
@@ -195,6 +196,34 @@ class DocumentControllerTest extends TestCase
             ->assertInvalid([
                 'file' => 'The file field must not be greater than 10240 kilobytes.',
             ]);
+
+        $this->assertDatabaseCount('documents', 0);
+    }
+
+    public function test_destroy_deletes_the_document_chunks_and_stored_file(): void
+    {
+        Storage::fake();
+
+        $document = Document::factory()->create();
+        DocumentChunk::factory()->for($document)->create();
+        Storage::put($document->path, 'Document contents');
+
+        $this->delete(route('documents.destroy', $document))
+            ->assertRedirectToRoute('documents.index')
+            ->assertSessionHas('success', 'Document deleted successfully');
+
+        $this->assertModelMissing($document);
+        $this->assertDatabaseCount('document_chunks', 0);
+        Storage::assertMissing($document->path);
+    }
+
+    public function test_store_is_rate_limited(): void
+    {
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            $this->post(route('documents.store'), [])->assertInvalid('file');
+        }
+
+        $this->post(route('documents.store'), [])->assertTooManyRequests();
 
         $this->assertDatabaseCount('documents', 0);
     }
