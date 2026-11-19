@@ -1,10 +1,10 @@
 # Laravel RAG Demo
 
-A simple RAG system. Upload a document, ask a question, and get an answer drawn only from that document.
+A simple RAG system. Upload documents, ask a question, and get an answer drawn only from those documents, with the source excerpts it used.
 
 If the retrieved text does not contain the answer, the app says "I don't know".
 
-![Laravel RAG Demo interface preview](docs/rag-demo-preview.svg)
+![Laravel RAG Demo interface preview](docs/rag-demo-preview.png)
 
 ## How it works
 
@@ -28,6 +28,15 @@ flowchart LR
     Generate --> History[(Answer history + citations)]
 ```
 
+## Design decisions
+
+- **pgvector inside PostgreSQL, not a separate vector database.** Documents, chunks, embeddings, and chat history live in one database, so there is one service to run and back up. Retrieval is a normal Eloquent query using `whereVectorSimilarTo`.
+- **Two layers of grounding.** Retrieval only returns chunks above a minimum cosine similarity (`RAG_MIN_SIMILARITY`, default 0.3). If no chunk qualifies, the app answers "I don't know" without calling the model at all. When chunks are found, the model runs at temperature 0 with instructions to answer only from the provided context.
+- **Fixed-size chunks with overlap.** Text is split into 800-character windows that overlap by 100 characters, so a fact that crosses a boundary still appears whole in one chunk. This is simpler and more predictable than sentence- or token-aware splitting, at the cost of sometimes cutting a sentence in half. Both values are configurable.
+- **Ingestion runs on a queue.** Text extraction and embedding can take seconds and depend on an external API, so the upload request only stores the file and dispatches a job. The job runs after the database commit, embeds chunks in batches to stay within provider limits, retries with backoff on failure, and marks the document `ready` or `failed`. The page polls while any document is `pending`.
+- **Answers keep their sources.** Each answer stores the excerpts it was based on, so you can check where it came from.
+- **Tests never call OpenAI.** The Laravel AI SDK is faked in every test, while queries run against a real PostgreSQL + pgvector database.
+
 ## Packages
 
 | Package | Role |
@@ -46,24 +55,34 @@ Answers use the OpenAI model set on `App\Ai\Agents\KnowledgeBase`. Embeddings us
 ## Requirements
 
 - Docker, with the Docker daemon running
-- PHP and Composer on the host, so you can install dependencies and start Sail
 - An OpenAI API key
+
+You do not need PHP or Composer on your machine.
 
 ## Setup
 
+Install the PHP dependencies with a temporary Docker container, then create your `.env` file:
+
 ```bash
-composer install
+docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$(pwd):/var/www/html" \
+    -w /var/www/html \
+    laravelsail/php84-composer:latest \
+    composer install --ignore-platform-reqs
+
 cp .env.example .env
 ```
 
-In `.env`, set the database name, user, and password, and add your API key. Keep `DB_HOST=pgsql` and `DB_CONNECTION=pgsql`. Sail reaches Postgres by the service name `pgsql`.
+If you already have PHP 8.5 and Composer installed, `composer install` works too.
+
+The database settings in `.env.example` already match Sail. Add your API key to `.env`:
 
 ```dotenv
-DB_DATABASE=laravel_rag_demo
-DB_USERNAME=sail
-DB_PASSWORD=password
 OPENAI_API_KEY=your-key
 ```
+
+Keep `DB_HOST=pgsql`, because Sail reaches Postgres by the service name `pgsql`.
 
 Start the containers, then prepare the app:
 
@@ -93,9 +112,15 @@ Open [http://localhost](http://localhost). Sail serves the app on port 80 unless
 
 Uploads, deletions, and questions are rate limited by IP address to protect the AI provider quota in a public demo.
 
-This is a single-user demo with no authentication. Anyone who can reach the app can upload, delete, and ask questions.
-
 Stop the containers with `vendor/bin/sail stop`.
+
+## Known limitations
+
+- **No authentication.** This is a single-user demo. Anyone who can reach the app can upload, delete, and ask questions, and everyone shares one document set and chat history.
+- **Text-based PDFs only.** Scanned PDFs have no text layer, so nothing is extracted from them.
+- **Character-based chunking.** Chunks can split a sentence in half. Sentence- or token-aware splitting would retrieve more precisely.
+- **Prompt injection.** Uploaded documents are sent to the model as context. A document containing instructions such as "ignore the rules above" could influence the answer.
+- **Similarity threshold needs tuning.** The default `RAG_MIN_SIMILARITY` of 0.3 was tuned for OpenAI's `text-embedding-3-small`, the default embedding model. A different embedding model may need a different value.
 
 ## Tests
 

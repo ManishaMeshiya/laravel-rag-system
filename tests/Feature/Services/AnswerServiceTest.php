@@ -11,6 +11,7 @@ use App\Services\AnswerService;
 use App\Services\ChunkRetriever;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Laravel\Ai\Prompts\AgentPrompt;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AnswerServiceTest extends TestCase
@@ -80,6 +81,41 @@ class AnswerServiceTest extends TestCase
         ]);
         $this->assertSame([], ChatMessage::query()->sole()->sources);
         KnowledgeBase::assertNeverPrompted();
+    }
+
+    #[DataProvider('unknownAnswers')]
+    public function test_model_answering_i_dont_know_is_stored_without_sources(string $modelAnswer): void
+    {
+        $this->mock(ChunkRetriever::class)
+            ->shouldReceive('retrieve')
+            ->once()
+            ->with('What is the annual revenue?')
+            ->andReturn([new RetrievedContext(
+                chunkId: 1,
+                content: 'Employees receive 20 vacation days.',
+                documentId: 2,
+                documentTitle: 'Vacation policy',
+            )]);
+
+        KnowledgeBase::fake([$modelAnswer]);
+
+        $answer = app(AnswerService::class)->answer('What is the annual revenue?');
+
+        $this->assertSame($modelAnswer, $answer->text);
+        $this->assertSame([], $answer->sources);
+        $this->assertSame([], ChatMessage::query()->sole()->sources);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function unknownAnswers(): array
+    {
+        return [
+            'with period' => ["I don't know."],
+            'curly apostrophe' => ['I don’t know'],
+            'surrounding whitespace' => ["  I don't know  "],
+        ];
     }
 
     public function test_history_is_returned_in_chronological_order(): void

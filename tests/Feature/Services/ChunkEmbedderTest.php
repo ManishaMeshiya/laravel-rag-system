@@ -103,9 +103,9 @@ class ChunkEmbedderTest extends TestCase
 
         Embeddings::fake([[[0.1, 0.2]]]);
 
-        $embedding = (new ChunkEmbedder)->embedQuery('Manisha BHimani');
+        $embedding = (new ChunkEmbedder)->embedQuery('Remote Work POLICY');
 
         $this->assertSame([0.1, 0.2], $embedding);
-        Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->inputs === ['manisha bhimani']);
+        Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->inputs === ['remote work policy']);
     }
 }

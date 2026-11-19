@@ -54,6 +54,6 @@ return [
 
     'retrieval_limit' => (int) env('RAG_RETRIEVAL_LIMIT', 5),
 
-    'min_similarity' => (float) env('RAG_MIN_SIMILARITY', 0.4),
+    'min_similarity' => (float) env('RAG_MIN_SIMILARITY', 0.3),
 
 ];

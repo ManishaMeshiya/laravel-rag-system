@@ -23,7 +23,8 @@ class KnowledgeBase implements Agent, HasProviderOptions
 
     public function instructions(): string
     {
-        return 'Answer only from the provided context. If the context does not contain the answer, say "I don\'t know".';
+        return 'Answer only from the provided context. If the context does not contain the answer, say only "I don\'t know". '
+            .'Write the answer as plain text, without Markdown formatting.';
     }
 
     public function providerOptions(Lab|string $provider): array

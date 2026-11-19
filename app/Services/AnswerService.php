@@ -25,6 +25,10 @@ class AnswerService
 
         $response = (new KnowledgeBase)->prompt($this->prompt($question, $sources));
 
+        if ($this->isUnknown($response->text)) {
+            return $this->storeAnswer($question, new AnswerData(text: $response->text));
+        }
+
         return $this->storeAnswer($question, new AnswerData(
             text: $response->text,
             sources: array_map(
@@ -64,6 +68,13 @@ class AnswerService
         ));
 
         return "Context:\n{$context}\n\nQuestion: {$question}";
+    }
+
+    private function isUnknown(string $answer): bool
+    {
+        $normalized = mb_strtolower(trim(str_replace('’', "'", $answer)), 'UTF-8');
+
+        return rtrim($normalized, '.!') === "i don't know";
     }
 
     private function storeAnswer(string $question, AnswerData $answer): AnswerData
