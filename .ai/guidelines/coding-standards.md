@@ -41,7 +41,7 @@ if (! $document->isReady()) {
 - Clean up stored files if a later step fails.
 
 ## Tests
-- Write Pest tests for each Service/Action.
+- Write PHPUnit tests for each Service/Action.
 - Fake the AI SDK in tests. Never call a real AI provider in tests.
 
 ## Do not

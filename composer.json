@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "manisha-meshiya/laravel-rag-demo",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Upload documents and ask questions answered only from them (RAG), built with Laravel, pgvector, and the Laravel AI SDK.",
+    "keywords": ["laravel", "rag", "pgvector", "ai", "inertia", "vue"],
     "license": "MIT",
     "require": {
         "php": "^8.5",
