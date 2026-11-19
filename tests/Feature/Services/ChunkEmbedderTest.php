@@ -59,6 +59,31 @@ class ChunkEmbedderTest extends TestCase
         Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->inputs === ['alpha', 'beta']);
     }
 
+    public function test_chunks_beyond_the_batch_size_are_sent_in_several_requests_and_keep_their_order(): void
+    {
+        config([
+            'rag.embedding_dimensions' => 1,
+            'rag.embedding_batch_size' => 2,
+        ]);
+
+        $vectors = ['alpha' => [0.1], 'beta' => [0.2], 'gamma' => [0.3]];
+
+        Embeddings::fake(fn (EmbeddingsPrompt $prompt): array => array_map(
+            fn (string $input): array => $vectors[$input],
+            $prompt->inputs,
+        ));
+
+        $embeddings = (new ChunkEmbedder)->embed([
+            new ChunkData(content: 'alpha', index: 0),
+            new ChunkData(content: 'beta', index: 1),
+            new ChunkData(content: 'gamma', index: 2),
+        ]);
+
+        $this->assertSame([[0.1], [0.2], [0.3]], $embeddings);
+        Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->inputs === ['alpha', 'beta']);
+        Embeddings::assertGenerated(fn (EmbeddingsPrompt $prompt): bool => $prompt->inputs === ['gamma']);
+    }
+
     public function test_query_returns_one_embedding_at_the_configured_dimensions(): void
     {
         config(['rag.embedding_dimensions' => 2]);

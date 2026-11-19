@@ -91,7 +91,9 @@ Open [http://localhost](http://localhost). Sail serves the app on port 80 unless
 4. Ask something the documents do not cover. The answer is "I don't know".
 5. Delete a document to remove its stored file and indexed chunks.
 
-Uploads and questions are rate limited by IP address to protect the AI provider quota in a public demo.
+Uploads, deletions, and questions are rate limited by IP address to protect the AI provider quota in a public demo.
+
+This is a single-user demo with no authentication. Anyone who can reach the app can upload, delete, and ask questions.
 
 Stop the containers with `vendor/bin/sail stop`.
 

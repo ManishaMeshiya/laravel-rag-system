@@ -176,6 +176,24 @@ class IngestDocumentTest extends TestCase
         $this->assertSame(DocumentStatus::Failed, $document->refresh()->status);
     }
 
+    public function test_job_for_a_deleted_document_is_discarded_without_failing(): void
+    {
+        config(['queue.default' => 'database']);
+
+        $document = Document::factory()->create();
+
+        Embeddings::fake()->preventStrayEmbeddings();
+
+        IngestDocument::dispatch($document);
+        $document->delete();
+
+        $this->artisan('queue:work', ['--once' => true, '--stop-when-empty' => true]);
+
+        $this->assertDatabaseCount('jobs', 0);
+        $this->assertDatabaseCount('failed_jobs', 0);
+        Embeddings::assertNothingGenerated();
+    }
+
     private function ingest(Document $document): void
     {
         app()->call([new IngestDocument($document), 'handle']);

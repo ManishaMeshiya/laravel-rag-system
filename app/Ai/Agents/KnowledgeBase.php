@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Ai\Agents;
 
-use Laravel\Ai\Contracts\Agent;
-use Laravel\Ai\Promptable;
-use Laravel\Ai\Attributes\Temperature;
 use Laravel\Ai\Attributes\MaxTokens;
 use Laravel\Ai\Attributes\Model;
 use Laravel\Ai\Attributes\Provider;
-use Laravel\Ai\Enums\Lab;
+use Laravel\Ai\Attributes\Temperature;
+use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\HasProviderOptions;
+use Laravel\Ai\Enums\Lab;
+use Laravel\Ai\Promptable;
 
 #[Provider(Lab::OpenAI)]
 #[Temperature(0.0)]

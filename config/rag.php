@@ -31,6 +31,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Embedding Batch Size
+    |--------------------------------------------------------------------------
+    |
+    | How many chunks are sent to the embedding provider in one request.
+    | Providers cap the number of inputs per request, so large documents
+    | are embedded in several requests.
+    |
+    */
+
+    'embedding_batch_size' => (int) env('RAG_EMBEDDING_BATCH_SIZE', 100),
+
+    /*
+    |--------------------------------------------------------------------------
     | Retrieval
     |--------------------------------------------------------------------------
     |

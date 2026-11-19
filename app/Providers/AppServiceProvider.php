@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use Illuminate\Cache\RateLimiting\Limit;
@@ -25,6 +27,11 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for(
             'document-uploads',
             fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()),
+        );
+
+        RateLimiter::for(
+            'document-deletes',
+            fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()),
         );
 
         RateLimiter::for(

@@ -227,4 +227,17 @@ class DocumentControllerTest extends TestCase
 
         $this->assertDatabaseCount('documents', 0);
     }
+
+    public function test_destroy_is_rate_limited(): void
+    {
+        $document = Document::factory()->create();
+
+        for ($attempt = 1; $attempt <= 10; $attempt++) {
+            $this->delete(route('documents.destroy', 999999))->assertNotFound();
+        }
+
+        $this->delete(route('documents.destroy', $document))->assertTooManyRequests();
+
+        $this->assertModelExists($document);
+    }
 }

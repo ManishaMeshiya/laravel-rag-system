@@ -12,8 +12,14 @@ use App\Services\DocumentTextExtractor;
 use App\Services\TextChunker;
 use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Backoff;
+use Illuminate\Queue\Attributes\DeleteWhenMissingModels;
+use Illuminate\Queue\Attributes\Tries;
 use Throwable;
 
+#[Tries(3)]
+#[Backoff(10, 60)]
+#[DeleteWhenMissingModels]
 class IngestDocument implements ShouldQueueAfterCommit
 {
     use Queueable;

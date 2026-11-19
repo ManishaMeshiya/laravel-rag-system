@@ -24,11 +24,12 @@ class ChunkEmbedder
             $chunks,
         );
 
-        $response = Embeddings::for($contents)
-            ->dimensions((int) config('rag.embedding_dimensions'))
-            ->generate();
+        $batchSize = max(1, (int) config('rag.embedding_batch_size'));
 
-        return $response->embeddings;
+        return array_merge(...array_map(
+            fn (array $batch): array => $this->generate($batch),
+            array_chunk($contents, $batchSize),
+        ));
     }
 
     /**
@@ -36,11 +37,19 @@ class ChunkEmbedder
      */
     public function embedQuery(string $text): array
     {
-        $response = Embeddings::for([$this->normalize($text)])
-            ->dimensions((int) config('rag.embedding_dimensions'))
-            ->generate();
+        return $this->generate([$this->normalize($text)])[0];
+    }
 
-        return $response->embeddings[0];
+    /**
+     * @param  list<string>  $inputs
+     * @return list<array<int, float>>
+     */
+    private function generate(array $inputs): array
+    {
+        return Embeddings::for($inputs)
+            ->dimensions((int) config('rag.embedding_dimensions'))
+            ->generate()
+            ->embeddings;
     }
 
     private function normalize(string $text): string
